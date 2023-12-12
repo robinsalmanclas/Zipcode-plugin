@@ -24,6 +24,8 @@ function search_postcode($postcode) {
     return false;
 }
 
+
+
 // AJAX-handlers för inloggade och icke-inloggade användare
 add_action('wp_ajax_search_postcode', 'handle_search_postcode');
 add_action('wp_ajax_nopriv_search_postcode', 'handle_search_postcode');
@@ -158,6 +160,27 @@ function handle_clear_postcode_request() {
 }
 add_action('init', 'handle_clear_postcode_request');
 
+// Lägg till shortcodes för att visa sökformuläret och det sparade postnumret
+function display_postcode_search_form() {
+    ob_start();
+    ?>
+    <div id="postcodeContainer">
+        <?php
+        $saved_postcode = get_saved_postcode(); // Funktionen som hämtar det sparade postnumret
+        if ($saved_postcode) {
+            // Visa postnumret som en länk om det är sparat
+            echo '<a href="?clear_postcode=1">' . esc_html($saved_postcode) . '</a>';
+        } else {
+            // Visa inputfältet om inget postnummer är sparat
+            echo '<input type="text" id="postcodeInput" placeholder="Ange postnummer" maxlength="6">';
+        }
+        ?>
+    </div>
+    <div id="searchResults"></div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('postcode_search_form', 'display_postcode_search_form');
 
 function handle_update_postcode_content() {
     $postcode = sanitize_text_field($_POST['postcode']);
@@ -174,3 +197,48 @@ function handle_update_postcode_content() {
 }
 add_action('wp_ajax_update_postcode_content', 'handle_update_postcode_content');
 add_action('wp_ajax_nopriv_update_postcode_content', 'handle_update_postcode_content');
+
+function display_saved_city() {
+    $saved_city = get_saved_city();
+    $saved_postcode = get_saved_postcode();
+
+    if ($saved_city) {
+        return 'Some services are available in ' . $saved_city;
+    } elseif ($saved_postcode) {
+        return 'Vi finns för närvarande inte i angivet postnummer';
+    } else {
+        return 'Enter your postal code';
+    }
+}
+add_shortcode('saved_postcode_text', 'display_saved_city');
+
+function display_product_city_relation() {
+    global $post;
+    $product_id = $post->ID; // Hämtar ID för den aktuella produkten
+
+    $saved_postcode = get_saved_postcode(); // Hämtar det sparade postnumret
+
+    if (!$saved_postcode) {
+        return "Vänligen ange postnummer för att se tillgänglighet";
+    }
+
+    if (is_product_related_to_user_city($product_id)) {
+        return "Denna produkt är tillgänglig i ditt område.";
+    } else {
+        return "Denna produkt är inte tillgänglig i ditt område.";
+    }
+}
+
+add_shortcode('product_city_relation', 'display_product_city_relation');
+
+function get_saved_postcode_text() {
+    $saved_postcode = get_saved_postcode(); // Antag att denna funktion returnerar det sparade postnumret
+    if ($saved_postcode) {
+        return 'Sparat postnummer: ' . esc_html($saved_postcode);
+    } else {
+        return 'Vänligen ange postnummer för att se tillgänglighet';
+    }
+}
+
+?>
+

@@ -29,39 +29,3 @@ function postalcode_clas_fixare_enqueue_scripts() {
 }
 add_action('wp_enqueue_scripts', 'postalcode_clas_fixare_enqueue_scripts');
 
-// Lägg till shortcodes för att visa sökformuläret och det sparade postnumret
-function display_postcode_search_form() {
-    ob_start();
-    ?>
-    <div id="postcodeContainer">
-        <?php
-        $saved_postcode = get_saved_postcode(); // Funktionen som hämtar det sparade postnumret
-        if ($saved_postcode) {
-            // Visa postnumret som en länk om det är sparat
-            echo '<a href="?clear_postcode=1">' . esc_html($saved_postcode) . '</a>';
-        } else {
-            // Visa inputfältet om inget postnummer är sparat
-            echo '<input type="text" id="postcodeInput" placeholder="Ange postnummer" maxlength="6">';
-        }
-        ?>
-    </div>
-    <div id="searchResults"></div>
-    <?php
-    return ob_get_clean();
-}
-add_shortcode('postcode_search_form', 'display_postcode_search_form');
-
-function display_saved_city() {
-    $saved_city = get_saved_city();
-    $saved_postcode = get_saved_postcode();
-
-    if ($saved_city) {
-        return 'Some services are available in ' . $saved_city;
-    } elseif ($saved_postcode) {
-        return 'Vi finns för närvarande inte i angivet postnummer';
-    } else {
-        return 'Enter your postal code';
-    }
-}
-add_shortcode('saved_postcode_text', 'display_saved_city');
-?>
