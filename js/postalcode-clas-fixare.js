@@ -1,21 +1,29 @@
 jQuery(document).ready(function ($) {
-    // Hantera sökning av postnummer
-    $('#postcodeSearchForm').submit(function (e) {
-        e.preventDefault(); // Förhindra standardformulärskickning
+    function formatAndSearchPostcode(postcode) {
+        var formattedPostcode = postcode.replace(/\D/g, '').substring(0, 5);
+        if (formattedPostcode.length > 3) {
+            formattedPostcode = formattedPostcode.substring(0, 3) + " " + formattedPostcode.substring(3);
+        }
 
-        var postcode = $('#postcodeInput').val();
-        var data = {
-            action: 'search_postcode',
-            postcode: postcode,
-        };
+        $('#postcodeInput').val(formattedPostcode);
 
+        if (formattedPostcode.length === 6) {
+            searchPostcode(formattedPostcode.replace(/\s/g, ''));
+        }
+    }
+
+    function searchPostcode(postcode) {
         $.ajax({
             type: 'POST',
             url: postalcode_clas_fixare_ajax.ajax_url,
-            data: data,
+            data: {
+                action: 'search_postcode',
+                postcode: postcode,
+            },
             success: function (response) {
                 if (response !== 'false') {
-                    $('#searchResults').html('Postnumret finns i: ' + response);
+                    // Om postnumret finns, uppdatera sidan
+                    location.reload();
                 } else {
                     $('#searchResults').html('Postnumret finns inte.');
                 }
@@ -24,11 +32,10 @@ jQuery(document).ready(function ($) {
                 $('#searchResults').html('Ett fel inträffade vid sökningen.');
             },
         });
-    });
-
-    // Hämta sparad postkoddata och visa den
-    var savedPostcode = $('#savedPostcode').data('saved-postcode');
-    if (savedPostcode) {
-        $('#savedPostcode').val(savedPostcode);
     }
+
+    $('#postcodeInput').on('input', function () {
+        var postcode = $(this).val();
+        formatAndSearchPostcode(postcode);
+    });
 });
