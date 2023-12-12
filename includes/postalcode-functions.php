@@ -121,6 +121,12 @@ function display_product_city_relation() {
     global $post;
     $product_id = $post->ID; // Hämtar ID för den aktuella produkten
 
+    $saved_postcode = get_saved_postcode(); // Hämtar det sparade postnumret
+
+    if (!$saved_postcode) {
+        return "Vänligen ange postnummer för att se tillgänglighet";
+    }
+
     if (is_product_related_to_user_city($product_id)) {
         return "Denna produkt är tillgänglig i ditt område.";
     } else {
@@ -129,6 +135,7 @@ function display_product_city_relation() {
 }
 
 add_shortcode('product_city_relation', 'display_product_city_relation');
+
 
 //rensa postnummer
 function clear_saved_postcode() {
