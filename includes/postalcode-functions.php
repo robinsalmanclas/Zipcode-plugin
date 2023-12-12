@@ -163,9 +163,8 @@ function handle_update_postcode_content() {
     $postcode = sanitize_text_field($_POST['postcode']);
     $_SESSION['user_postcode'] = $postcode; // Spara postnumret i sessionen
 
-    // Antag att du har funktioner som returnerar uppdaterat innehåll
-    $savedPostcodeText = get_saved_postcode_text();
-    $productCityRelationText = get_product_city_relation_text(get_the_ID());
+    $savedPostcodeText = get_saved_postcode_text(); // Funktion som returnerar text baserat på det sparade postnumret
+    $productCityRelationText = get_product_city_relation_text(get_the_ID()); // Funktion som returnerar produktens tillgänglighetstext
 
     echo json_encode([
         'savedPostcodeText' => $savedPostcodeText,
