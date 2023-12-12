@@ -45,7 +45,16 @@ function display_postcode_search_form() {
 add_shortcode('postcode_search_form', 'display_postcode_search_form');
 
 function display_saved_city() {
-    return 'Sparad stad: ' . get_saved_city();
+    $saved_city = get_saved_city();
+    $saved_postcode = get_saved_postcode();
+
+    if ($saved_city) {
+        return 'Sparad stad: ' . $saved_city;
+    } elseif ($saved_postcode) {
+        return 'Postnumret finns inte.';
+    } else {
+        return 'Inget postnummer är sparat.';
+    }
 }
 add_shortcode('saved_postcode_text', 'display_saved_city');
 ?>

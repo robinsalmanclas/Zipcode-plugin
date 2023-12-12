@@ -33,11 +33,11 @@ function handle_search_postcode() {
     $postcode = sanitize_text_field($_POST['postcode']);
     $term_name = search_postcode($postcode);
 
+    // Spara postnumret i en PHP-session oavsett om det finns en matchning eller inte
+    $_SESSION['user_postcode'] = $postcode;
+
     if ($term_name) {
-        // Spara postnumret i en PHP-session
-        $_SESSION['user_postcode'] = $postcode;
         $_SESSION['user_city'] = $term_name;
-        error_log('Postcode saved: ' . $postcode); // Debug-utskrift
         echo $term_name;
     } else {
         echo 'false';
@@ -83,3 +83,70 @@ function get_saved_city() {
     }
 }
 
+function get_saved_user_city() {
+    return isset($_SESSION['user_city']) ? $_SESSION['user_city'] : null;
+}
+
+global $post;
+$product_id = $post->ID;
+
+function is_product_related_to_user_city($product_id) {
+    $user_city = get_saved_user_city();
+    if (!$user_city) {
+        return false;
+    }
+
+    // Hämta termen för den sparade user_city
+    $term = get_term_by('name', $user_city, 'product-city');
+    if (!$term) {
+        return false;
+    }
+
+    // Hämta de relaterade produkterna för termen med ACF
+    $related_products = get_field('products', $term);
+
+    // Kontrollera om produkt-ID:t finns i listan över relaterade produkter
+    if (is_array($related_products)) {
+        foreach ($related_products as $related_product) {
+            if ($related_product->ID == $product_id) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+function display_product_city_relation() {
+    global $post;
+    $product_id = $post->ID; // Hämtar ID för den aktuella produkten
+
+    if (is_product_related_to_user_city($product_id)) {
+        return "Denna produkt är tillgänglig i ditt område.";
+    } else {
+        return "Denna produkt är inte tillgänglig i ditt område.";
+    }
+}
+
+add_shortcode('product_city_relation', 'display_product_city_relation');
+
+//rensa postnummer
+function clear_saved_postcode() {
+    if (isset($_SESSION['user_postcode'])) {
+        unset($_SESSION['user_postcode']);
+    }
+    if (isset($_SESSION['user_city'])) {
+        unset($_SESSION['user_city']);
+    }
+}
+
+
+function handle_clear_postcode_request() {
+    if (isset($_GET['clear_postcode'])) {
+        clear_saved_postcode();
+        // Omdirigera till samma sida utan query-parametern för att undvika oavsiktlig återrensning
+        wp_redirect(remove_query_arg('clear_postcode'));
+        exit;
+    }
+}
+add_action('init', 'handle_clear_postcode_request');
