@@ -8,29 +8,26 @@ jQuery(document).ready(function ($) {
         $('#postcodeInput').val(formattedPostcode);
 
         if (formattedPostcode.length === 6) {
-            searchPostcode(formattedPostcode.replace(/\s/g, ''));
+            updatePostcodeContent(formattedPostcode.replace(/\s/g, ''));
         }
     }
 
-    function searchPostcode(postcode) {
+    function updatePostcodeContent(postcode) {
         $.ajax({
             type: 'POST',
             url: postalcode_clas_fixare_ajax.ajax_url,
             data: {
-                action: 'search_postcode',
-                postcode: postcode,
+                action: 'update_postcode_content',
+                postcode: postcode
             },
             success: function (response) {
-                if (response !== 'false') {
-                    // Om postnumret finns, uppdatera sidan
-                    location.reload();
-                } else {
-                    $('#searchResults').html('Postnumret finns inte.');
-                }
+                var data = JSON.parse(response);
+                $('#savedPostcodeContainer').html(data.savedPostcodeText);
+                $('#productCityRelationContainer').html(data.productCityRelationText);
             },
             error: function () {
-                $('#searchResults').html('Ett fel inträffade vid sökningen.');
-            },
+                console.log('Ett fel inträffade vid uppdatering av innehållet.');
+            }
         });
     }
 

@@ -157,3 +157,21 @@ function handle_clear_postcode_request() {
     }
 }
 add_action('init', 'handle_clear_postcode_request');
+
+
+function handle_update_postcode_content() {
+    $postcode = sanitize_text_field($_POST['postcode']);
+    $_SESSION['user_postcode'] = $postcode; // Spara postnumret i sessionen
+
+    // Antag att du har funktioner som returnerar uppdaterat innehåll
+    $savedPostcodeText = get_saved_postcode_text();
+    $productCityRelationText = get_product_city_relation_text(get_the_ID());
+
+    echo json_encode([
+        'savedPostcodeText' => $savedPostcodeText,
+        'productCityRelationText' => $productCityRelationText
+    ]);
+    wp_die();
+}
+add_action('wp_ajax_update_postcode_content', 'handle_update_postcode_content');
+add_action('wp_ajax_nopriv_update_postcode_content', 'handle_update_postcode_content');
