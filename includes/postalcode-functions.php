@@ -222,6 +222,32 @@ function get_saved_postcode_text() {
     }
 }
 
+function get_product_city_relation_text($product_id) {
+    $user_city = get_saved_user_city();
+    if (!$user_city) {
+        return "Vänligen ange postnummer för att se tillgänglighet";
+    }
+
+    // Hämta termen för den sparade user_city
+    $term = get_term_by('name', $user_city, 'product-city');
+    if (!$term) {
+        return "Denna produkt är inte tillgänglig i ditt område.";
+    }
+
+    // Hämta de relaterade produkterna för termen med ACF
+    $related_products = get_field('products', $term);
+
+    // Kontrollera om produkt-ID:t finns i listan över relaterade produkter
+    if (is_array($related_products)) {
+        foreach ($related_products as $related_product) {
+            if ($related_product->ID == $product_id) {
+                return "Denna produkt är tillgänglig i ditt område.";
+            }
+        }
+    }
+
+    return "Denna produkt är inte tillgänglig i ditt område.";
+}
 
 ?>
 
