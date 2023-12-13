@@ -57,3 +57,9 @@
     background: #F1ABAB;
     color: black;
 }
+
+.single_add_to_cart_button:disabled {
+    background-color: #BFBFBF;
+    color: #FFFFFF;
+    cursor: not-allowed;
+}

@@ -39,3 +39,43 @@ jQuery(document).ready(function ($) {
         formatAndSearchPostcode(postcode);
     });
 });
+
+jQuery(document).ready(function ($) {
+    function updateAddToCartButton() {
+        var addToCartButton = $('.single_add_to_cart_button');
+        var postcode = $('#postcodeInput').val(); // Antag att detta är ID för ditt postnummerfält
+
+        // Kontrollera om postnummer är angivet
+        if (!postcode) {
+            addToCartButton.prop('disabled', true).text('Ange posnummer för tillgänglighet');
+            return;
+        }
+
+        // AJAX-anrop för att kontrollera produktens tillgänglighet
+        $.ajax({
+            type: 'POST',
+            url: postalcode_clas_fixare_ajax.ajax_url,
+            data: {
+                action: 'search_postcode',
+                postcode: postcode,
+            },
+            success: function (response) {
+                if (response !== 'false') {
+                    addToCartButton.prop('disabled', false).text('Lägg till i kundvagn');
+                } else {
+                    addToCartButton.prop('disabled', true).text('Ej tillgängligt i området');
+                }
+            },
+            error: function () {
+                console.error('Ett fel inträffade vid AJAX-anropet');
+            }
+        });
+    }
+
+    // Uppdatera knappen när sidan laddas
+    updateAddToCartButton();
+
+    // Om du har någon händelse som uppdaterar postnumret, anropa updateAddToCartButton där
+    // Exempel: När ett postnummer väljs eller ändras
+});
+
