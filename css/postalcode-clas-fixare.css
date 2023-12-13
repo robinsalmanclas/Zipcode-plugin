@@ -1,0 +1,59 @@
+/* postalcode-clas-fixare.css */
+.postcode-status {
+    height: 29px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    overflow: hidden;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+}
+
+.postcode-status-icon {
+    width: 21px;
+    height: 21px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.postcode-status-icon-inner {
+    width: 21px;
+    height: 21px;
+    position: relative;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    display: flex;
+}
+
+.postcode-status-icon-black {
+    filter: invert(0%) sepia(90%) saturate(7460%) hue-rotate(188deg) brightness(111%) contrast(108%);
+}
+
+.postcode-status-icon-white {
+    filter: invert(100%) sepia(75%) saturate(0%) hue-rotate(94deg) brightness(114%) contrast(100%);
+}
+
+.postcode-status-text {
+    font-size: 13px;
+    font-family: Clas Ohlson Sans;
+    font-weight: 400;
+    word-wrap: break-word;
+}
+
+.postcode-status-gray {
+    background: #BFBFBF;
+    color: black;
+}
+
+.postcode-status-black {
+    background: black;
+    color: #EEEEEC;
+}
+
+.postcode-status-red {
+    background: #F1ABAB;
+    color: black;
+}
