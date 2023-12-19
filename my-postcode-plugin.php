@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Postalcode Clas Fixare
  * Plugin URI: https://clasfixare.se
- * Description: En WordPress-plugin för att hantera postnummer.
+ * Description: A WordPress plugin for managing postcodes.
  * Version: 1.0
  * Author: Robin
  * Author URI: https://clasfixare.se
@@ -12,41 +12,48 @@
  * WC tested up to: 8.6
  */
 
-// Starta PHP-session (om den inte redan är startad)
+// Start PHP session (if not already started)
 if (!session_id()) {
     session_start();
 }
 
+// Enqueue CSS styles
 function postalcode_clas_fixare_enqueue_styles() {
     wp_enqueue_style('postalcode-clas-fixare-style', plugins_url('css/postalcode-clas-fixare.css', __FILE__));
 }
 add_action('wp_enqueue_scripts', 'postalcode_clas_fixare_enqueue_styles');
 
-// Inkludera PHP-fil med pluginens funktioner
+// Include PHP file with the plugin's functions
 include(plugin_dir_path(__FILE__) . 'includes/postalcode-functions.php');
 
-// Enqueue JavaScript-filen
+// Enqueue JavaScript file and localize script
 function postalcode_clas_fixare_enqueue_scripts() {
     wp_enqueue_script('postalcode-clas-fixare-script', plugins_url('js/postalcode-clas-fixare.js', __FILE__), array('jquery'), null, true);
 
-    // Lägg till AJAX URL som en lokaliserad variabel
-    wp_localize_script('postalcode-clas-fixare-script', 'postalcode_clas_fixare_ajax', array('ajax_url' => admin_url('admin-ajax.php')));
+    // Create a nonce
+    $nonce = wp_create_nonce('postalcode_clas_fixare_nonce');
+
+    // Add AJAX URL and nonce as a localized variable
+    wp_localize_script('postalcode-clas-fixare-script', 'postalcode_clas_fixare_ajax', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => $nonce
+    ));
 }
 add_action('wp_enqueue_scripts', 'postalcode_clas_fixare_enqueue_scripts');
 
-// Lägg till shortcodes för att visa sökformuläret och det sparade postnumret
+// Add shortcodes to display the search form and the saved postcode
 function display_postcode_search_form() {
     ob_start();
     ?>
     <div id="postcodeContainer">
         <?php
-        $saved_postcode = get_saved_postcode(); // Funktionen som hämtar det sparade postnumret
+        $saved_postcode = get_saved_postcode(); // Function that retrieves the saved postcode
         if ($saved_postcode) {
-            // Visa postnumret som en länk om det är sparat
+            // Display the postcode as a link if it is saved
             echo '<a href="?clear_postcode=1">' . esc_html($saved_postcode) . '</a>';
         } else {
-            // Visa inputfältet om inget postnummer är sparat
-            echo '<input type="text" id="postcodeInput" placeholder="Ange postnummer" maxlength="6">';
+            // Display the input field if no postcode is saved
+            echo '<input type="text" id="postcodeInput" placeholder="Enter postcode" maxlength="6">';
         }
         ?>
     </div>
@@ -57,13 +64,13 @@ function display_postcode_search_form() {
 add_shortcode('postcode_search_form', 'display_postcode_search_form');
 
 function display_saved_city() {
-    $saved_city = get_saved_city();
+    $saved_city = get_saved_city(); // Function that retrieves the saved city
     $saved_postcode = get_saved_postcode();
 
     if ($saved_city) {
         return 'Some services are available in ' . $saved_city;
     } elseif ($saved_postcode) {
-        return 'Vi finns för närvarande inte i angivet postnummer';
+        return 'Currently not available in the provided postcode';
     } else {
         return 'Enter your postal code';
     }
@@ -80,7 +87,7 @@ function display_product_city_relation() {
     $product_id = $post->ID;
     $saved_postcode = get_saved_postcode();
 
-    // Hämta SVG-ikonen
+    // Retrieve the SVG icon
     $svg_icon = get_svg_icon_content();
 
     if (!$saved_postcode) {

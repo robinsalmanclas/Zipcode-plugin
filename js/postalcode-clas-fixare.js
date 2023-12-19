@@ -1,4 +1,5 @@
 jQuery(document).ready(function ($) {
+    // Function to format and search for a postcode
     function formatAndSearchPostcode(postcode) {
         var formattedPostcode = postcode.replace(/\D/g, '').substring(0, 5);
         if (formattedPostcode.length > 3) {
@@ -9,9 +10,13 @@ jQuery(document).ready(function ($) {
 
         if (formattedPostcode.length === 6) {
             searchPostcode(formattedPostcode.replace(/\s/g, ''));
+        } else {
+            // Disable the button if the postcode is not complete
+            updateAddToCartButton(false, 'Enter postcode for availability');
         }
     }
 
+    // Function to search for a postcode
     function searchPostcode(postcode) {
         $.ajax({
             type: 'POST',
@@ -19,63 +24,68 @@ jQuery(document).ready(function ($) {
             data: {
                 action: 'search_postcode',
                 postcode: postcode,
+                security: postalcode_clas_fixare_ajax.nonce
             },
             success: function (response) {
                 if (response !== 'false') {
-                    // Om postnumret finns, uppdatera sidan
-                    location.reload();
+                    updateAddToCartButton(true, 'Add to cart');
+                    location.reload(); // Ladda om sidan om postnumret är giltigt
                 } else {
-                    $('#searchResults').html('Postnumret finns inte.');
+                    $('#searchResults').html('The postcode does not exist.');
+                    updateAddToCartButton(false, 'Ej tillgängligt i området');
                 }
             },
             error: function () {
-                $('#searchResults').html('Ett fel inträffade vid sökningen.');
+                $('#searchResults').html('An error occurred during the search.');
+                updateAddToCartButton(false, 'Enter postcode for availability');
             },
         });
     }
 
+    // Function to update the Add to Cart button
+    function updateAddToCartButton(isEnabled, text) {
+        var addToCartButton = $('.single_add_to_cart_button');
+        addToCartButton.prop('disabled', !isEnabled).text(text);
+    }
+
+    // Function to check the postcode availability for the current product
+    function checkProductAvailability() {
+        var savedPostcode = $('#postcodeInput').data('saved-postcode');
+        var productID = $('#productInfo').data('product-id');
+
+        if (savedPostcode && productID) {
+            $.ajax({
+                type: 'POST',
+                url: postalcode_clas_fixare_ajax.ajax_url,
+                data: {
+                    action: 'check_product_availability',
+                    postcode: savedPostcode,
+                    product_id: productID,
+                    security: postalcode_clas_fixare_ajax.nonce
+                },
+                success: function (response) {
+                    if (response.isAvailable) {
+                        updateAddToCartButton(true, 'Add to cart');
+                    } else {
+                        updateAddToCartButton(false, 'Ej tillgängligt i området');
+                    }
+                },
+                error: function () {
+                    console.error('Ett fel inträffade vid kontroll av produktens tillgänglighet.');
+                }
+            });
+        } else {
+            // Om inget postnummer är sparat, inaktivera knappen
+            updateAddToCartButton(false, 'Enter postcode for availability');
+        }
+    }
+
+    // Event listener for postcode input
     $('#postcodeInput').on('input', function () {
         var postcode = $(this).val();
         formatAndSearchPostcode(postcode);
     });
+
+    // Initial check of product availability
+    checkProductAvailability();
 });
-
-jQuery(document).ready(function ($) {
-    function updateAddToCartButton() {
-        var addToCartButton = $('.single_add_to_cart_button');
-        var postcode = $('#postcodeInput').val(); // Antag att detta är ID för ditt postnummerfält
-
-        // Kontrollera om postnummer är angivet
-        if (!postcode) {
-            addToCartButton.prop('disabled', true).text('Ange posnummer för tillgänglighet');
-            return;
-        }
-
-        // AJAX-anrop för att kontrollera produktens tillgänglighet
-        $.ajax({
-            type: 'POST',
-            url: postalcode_clas_fixare_ajax.ajax_url,
-            data: {
-                action: 'search_postcode',
-                postcode: postcode,
-            },
-            success: function (response) {
-                if (response !== 'false') {
-                    addToCartButton.prop('disabled', false).text('Lägg till i kundvagn');
-                } else {
-                    addToCartButton.prop('disabled', true).text('Ej tillgängligt i området');
-                }
-            },
-            error: function () {
-                console.error('Ett fel inträffade vid AJAX-anropet');
-            }
-        });
-    }
-
-    // Uppdatera knappen när sidan laddas
-    updateAddToCartButton();
-
-    // Om du har någon händelse som uppdaterar postnumret, anropa updateAddToCartButton där
-    // Exempel: När ett postnummer väljs eller ändras
-});
-

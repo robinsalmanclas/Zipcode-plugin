@@ -1,11 +1,18 @@
 <?php
 
-// Funktion för att söka efter ett postnummer i 'product-city' taxonomin
+// Function to search for a postcode in the 'product-city' taxonomy
 function search_postcode($postcode) {
-    $terms = get_terms(array(
-        'taxonomy' => 'product-city',
-        'hide_empty' => false,
-    ));
+    // Attempt to retrieve cached terms
+    $cached_terms = get_transient('cached_product_city_terms');
+    if (false === $cached_terms) {
+        $terms = get_terms(array(
+            'taxonomy' => 'product-city',
+            'hide_empty' => false,
+        ));
+        set_transient('cached_product_city_terms', $terms, 12 * HOUR_IN_SECONDS);
+    } else {
+        $terms = $cached_terms;
+    }
 
     foreach ($terms as $term) {
         $zipcodes = get_field('zipcodes', $term);
@@ -24,16 +31,19 @@ function search_postcode($postcode) {
     return false;
 }
 
-// AJAX-handlers för inloggade och icke-inloggade användare
+// AJAX handlers for logged-in and non-logged-in users
 add_action('wp_ajax_search_postcode', 'handle_search_postcode');
 add_action('wp_ajax_nopriv_search_postcode', 'handle_search_postcode');
 
-// Hantera AJAX-förfrågan och spara postnumret i en transient
+// Handle AJAX request and save the postcode in a transient
 function handle_search_postcode() {
+    // Check nonce for security
+    check_ajax_referer('postalcode_clas_fixare_nonce', 'security');
+
     $postcode = sanitize_text_field($_POST['postcode']);
     $term_name = search_postcode($postcode);
 
-    // Spara postnumret i en PHP-session oavsett om det finns en matchning eller inte
+    // Save the postcode in a PHP session whether there is a match or not
     $_SESSION['user_postcode'] = $postcode;
 
     if ($term_name) {
@@ -43,10 +53,10 @@ function handle_search_postcode() {
         echo 'false';
     }
 
-    wp_die(); // Avsluta AJAX-anropet korrekt
+    wp_die(); // Terminate AJAX request correctly
 }
 
-// Funktion för att logga när postnumret hämtas
+// Function to log when the postcode is retrieved
 function log_retrieved_postcode() {
     $saved_postcode = get_transient('user_postcode');
     if ($saved_postcode !== false) {
@@ -56,13 +66,16 @@ function log_retrieved_postcode() {
     }
 }
 
-// Kör loggningsfunktionen vid varje sidbelastning
+// Run the logging function at every page load
 add_action('init', 'log_retrieved_postcode');
 
 add_action('wp_ajax_get_saved_postcode', 'handle_get_saved_postcode');
 add_action('wp_ajax_nopriv_get_saved_postcode', 'handle_get_saved_postcode');
 
 function handle_get_saved_postcode() {
+    // Check nonce for security
+    check_ajax_referer('postalcode_clas_fixare_nonce', 'security');
+
     echo get_transient('user_postcode') ?: 'false';
     wp_die();
 }
@@ -96,16 +109,16 @@ function is_product_related_to_user_city($product_id) {
         return false;
     }
 
-    // Hämta termen för den sparade user_city
+    // Retrieve the term for the saved user_city
     $term = get_term_by('name', $user_city, 'product-city');
     if (!$term) {
         return false;
     }
 
-    // Hämta de relaterade produkterna för termen med ACF
+    // Retrieve the related products for the term with ACF
     $related_products = get_field('products', $term);
 
-    // Kontrollera om produkt-ID:t finns i listan över relaterade produkter
+    // Check if the product ID is in the list of related products
     if (is_array($related_products)) {
         foreach ($related_products as $related_product) {
             if ($related_product->ID == $product_id) {
@@ -117,7 +130,7 @@ function is_product_related_to_user_city($product_id) {
     return false;
 }
 
-//rensa postnummer
+// Clear postcode
 function clear_saved_postcode() {
     if (isset($_SESSION['user_postcode'])) {
         unset($_SESSION['user_postcode']);
@@ -127,24 +140,25 @@ function clear_saved_postcode() {
     }
 }
 
-
 function handle_clear_postcode_request() {
     if (isset($_GET['clear_postcode'])) {
         clear_saved_postcode();
-        // Omdirigera till samma sida utan query-parametern för att undvika oavsiktlig återrensning
+        // Redirect to the same page without the query parameter to avoid accidental re-clearing
         wp_redirect(remove_query_arg('clear_postcode'));
         exit;
     }
 }
 add_action('init', 'handle_clear_postcode_request');
 
-
 function handle_update_postcode_content() {
-    $postcode = sanitize_text_field($_POST['postcode']);
-    $_SESSION['user_postcode'] = $postcode; // Spara postnumret i sessionen
+    // Check nonce for security
+    check_ajax_referer('postalcode_clas_fixare_nonce', 'security');
 
-    $savedPostcodeText = get_saved_postcode_text(); // Funktion som returnerar text baserat på det sparade postnumret
-    $productCityRelationText = get_product_city_relation_text(get_the_ID()); // Funktion som returnerar produktens tillgänglighetstext
+    $postcode = sanitize_text_field($_POST['postcode']);
+    $_SESSION['user_postcode'] = $postcode; // Save the postcode in the session
+
+    $savedPostcodeText = get_saved_postcode_text(); // Function that returns text based on the saved postcode
+    $productCityRelationText = get_product_city_relation_text(get_the_ID()); // Function that returns the product's availability text
 
     echo json_encode([
         'savedPostcodeText' => $savedPostcodeText,
@@ -154,3 +168,5 @@ function handle_update_postcode_content() {
 }
 add_action('wp_ajax_update_postcode_content', 'handle_update_postcode_content');
 add_action('wp_ajax_nopriv_update_postcode_content', 'handle_update_postcode_content');
+
+?>
