@@ -28,8 +28,8 @@ jQuery(document).ready(function ($) {
             },
             success: function (response) {
                 if (response !== 'false') {
+                    location.reload(); // Reload page if zipcode is available
                     updateAddToCartButton(true, 'Add to cart');
-                    location.reload(); // Ladda om sidan om postnumret är giltigt
                 } else {
                     $('#searchResults').html('The postcode does not exist.');
                     updateAddToCartButton(false, 'Ej tillgängligt i området');
